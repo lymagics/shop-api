@@ -10,7 +10,8 @@ This api implements:
 * OpenAPI specification
 
 ### Project documentation is avaliable at http://{your_host}/docs
-![](https://codimd.s3.shivering-isles.com/demo/uploads/340e733e-5ea4-444e-b6f3-37fb2e25a452.png)
+![340e733e-5ea4-444e-b6f3-37fb2e25a452](https://user-images.githubusercontent.com/91427016/193673872-fbee9319-8983-4ad5-b405-44c7a74e9ac4.png)
+
 
 ### To run this project locally follow this steps:
 1. Clone this repository:
