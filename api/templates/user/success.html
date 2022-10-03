@@ -1,0 +1,9 @@
+<h1>Dear {{ cart.user.username }}</h1>
+<p>Thank you for your purchase!</p>
+
+<p>You ordered:</p>
+{% for item in cart.items %}
+<p>{{ item.product.name }} - {{ item.product.price }} - {{ item.quantity }}</p>
+{% endfor %}
+
+<p>We will contact you as soon as possible!</p>

@@ -1,0 +1,8 @@
+<h1>Purchase from {{ cart.user.username }}</h1>
+
+<p>Order id: {{ cart.cart_id }}</p>
+
+<p>Order items:</p>
+{% for item in cart.items %}
+<p>{{ item.product.name }} - {{ item.product.price }} - {{ item.quantity }}</p>
+{% endfor %}

@@ -1,0 +1,9 @@
+Dear {{ cart.user.username }}
+Thank you for your purchase!
+
+You ordered:
+{% for item in cart.items %}
+{{ item.product.name }} - {{ item.product.price }} - {{ item.quantity }}
+{% endfor %}
+
+We will contact you as soon as possible!

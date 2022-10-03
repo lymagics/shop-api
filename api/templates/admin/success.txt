@@ -1,0 +1,8 @@
+Purchase from {{ cart.user.username }}
+
+Order id: {{ cart.cart_id }}
+
+Order items:
+{% for item in cart.items %}
+{{ item.product.name }} - {{ item.product.price }} - {{ item.quantity }}
+{% endfor %}
