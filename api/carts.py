@@ -5,7 +5,7 @@ from flask import current_app, request
 from .auth import token_auth
 from .email import send_mail
 from .schemas import CartSchema, CheckoutSchema
-from .models import db, Cart, Product, CartItem, CartStatus
+from .models import db, Cart, CartStatus
 from .utils import checkout_response
 
 carts = APIBlueprint("carts", __name__)
@@ -31,18 +31,8 @@ def new():
 @carts.doc(summary="Put a product in the cart.", description="Put a product in the cart.")
 def add(cart_id, product_id):
     """Put a product in the cart."""
-    cart = Cart.query.filter_by(cart_id=cart_id).first() or abort(404, "Cart not found.")
-    product = Product.query.filter_by(product_id=product_id).first() or abort(404, "Product not found.")
-    if cart.user != token_auth.current_user:
-        abort(403, "This is not your cart.")
-    if cart.status.name == "paid":
-        abort(400, "Cart is paid.")
-
-    item = cart.items.filter_by(product=product).first()
-    if not item:
-        item = CartItem(cart=cart, product=product)
-    item.quantity = (item.quantity + 1) if item.quantity else 1
-    db.session.add(item)
+    cart = Cart.retrieve(cart_id=cart_id).validate_paid()
+    cart = cart.add_product(product_id)
     db.session.commit()
     return cart
 
@@ -53,10 +43,7 @@ def add(cart_id, product_id):
 @carts.doc(summary="Retrieve information about cart.", description="Retrieve information about cart. You have to own this cart to get it.")
 def get(cart_id):
     """Retrieve information about cart."""
-    cart = Cart.query.filter_by(cart_id=cart_id).first() or abort(404, "Cart not found.")
-    if cart.user != token_auth.current_user:
-        abort(403, "This is not your cart.")
-    return cart
+    return Cart.retrieve(cart_id=cart_id)
 
 
 @carts.delete("/carts/<int:cart_id>/products/<int:product_id>")
@@ -65,20 +52,8 @@ def get(cart_id):
 @carts.doc(summary="Delete product from cart.", description="Delete product from cart. You have to own this cart to get it.")
 def delete(cart_id, product_id):
     """Delete product from cart."""
-    cart = Cart.query.filter_by(cart_id=cart_id).first() or abort(404, "Cart not found.")
-    if cart.user != token_auth.current_user:
-        abort(403, "This is not your cart.")
-    if cart.status.name == "paid":
-        abort(400, "Cart is paid.")
-    
-    item = cart.items.filter_by(product_id=product_id).first()
-    if not item:
-        abort(404, "Product not found.")
-
-    item.quantity -= 1
-    if item.quantity == 0:
-        cart.items.remove(item)
-        db.session.delete(item)
+    cart = Cart.retrieve(cart_id=cart_id).validate_paid()
+    cart.remove_product(product_id)
     db.session.commit()
     return "", 204
 
@@ -89,14 +64,7 @@ def delete(cart_id, product_id):
 @carts.doc(summary="Create checkout session.", description="Create checkout session so user can pay for his cart.")
 def checkout(cart_id):
     """Create checkout session."""
-    cart = Cart.query.filter_by(cart_id=cart_id).first() or abort(404, "Cart not found.")
-    if cart.user != token_auth.current_user:
-        abort(403, "This is not your cart.")
-    if cart.status.name == "paid":
-        abort(400, "Cart is paid.")
-    if not cart.items.all():
-        abort(400, "Cart is empty.")
-
+    cart = Cart.retrieve(cart_id=cart_id).validate_paid().validate_empty()
     url = cart.create_checkout_session()
     return checkout_response(url)
 

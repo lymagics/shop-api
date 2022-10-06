@@ -2,6 +2,7 @@ import secrets
 from datetime import datetime, timedelta
 
 import stripe
+from apiflask import abort
 from flask import current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -77,6 +78,46 @@ class Cart(db.Model):
     status_id = db.Column(db.Integer, db.ForeignKey("cart_statuses.status_id"))
 
     items = db.relationship("CartItem", backref="cart", cascade="all,delete", lazy="dynamic")
+
+    @staticmethod
+    def retrieve(**kwargs):
+        """Retrieve cart with additional filters."""
+        from .auth import token_auth
+        cart = Cart.query.filter_by(**kwargs).first() or abort(404, "Cart not found.")
+        if cart.user != token_auth.current_user:
+            abort(403, "This is not your cart.")
+        return cart
+
+    def validate_paid(self):
+        """Validate cart is not paid."""
+        if self.status.name == "paid":
+            abort(400, "Cart is paid.")
+        return self
+
+    def add_product(self, product_id: int):
+        """Add product to the cart."""
+        product = Product.query.get(product_id) or abort(404, "Product not found.")
+        item = self.items.filter_by(product=product).first()
+        if not item:
+            item = CartItem(cart=self, product=product)
+        item.quantity = (item.quantity + 1) if item.quantity else 1
+        db.session.add(item)
+        return self
+
+    def remove_product(self, product_id: int):
+        """Remove product from cart."""
+        item = self.items.filter_by(product_id=product_id).first() or abort(404, "Product not found.")
+
+        item.quantity -= 1
+        if item.quantity == 0:
+            self.items.remove(item)
+            db.session.delete(item)
+
+    def validate_empty(self):
+        """Validate cart is not empty."""
+        if not self.items.all():
+            abort(400, "Cart is empty.")
+        return self
 
     def create_checkout_session(self, currency: str="usd"):
         """Create Stripe Checkout Session."""
