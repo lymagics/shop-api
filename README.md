@@ -38,13 +38,13 @@ This api implements:
 ```
     flask populate statuses
 ```
-9. Run flask local server:
+8. Run flask local server:
 ```
     flask run
 ```
-8. Run ngrok:
+9. Run ngrok:
 ```
     ngrok http 5000
 ```
-9. Go back to [stripe checkout](https://stripe.com/docs/payments/checkout), go to dashboard and create webook with your ngrok url.
-10. Complite .env file with STRIPE_WEBHOOK_SECRET.
+10. Go back to [stripe checkout](https://stripe.com/docs/payments/checkout), go to dashboard and create webook with your ngrok url.
+11. Complite .env file with STRIPE_WEBHOOK_SECRET.
